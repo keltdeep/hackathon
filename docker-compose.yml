@@ -1,0 +1,27 @@
+version: "3.8"
+
+volumes:
+  hackathon_volume:
+    name: hackathon_volume
+
+services:
+  hackathon_node_api:
+    container_name: hackathon_node_api
+    image: node:hackathon_node_api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "npm run start:dev"
+    ports:
+      - 6005:6005
+    networks:
+      - hackathon_network
+    volumes:
+      - .:/usr/app
+      - /usr/app/node_modules
+    restart: unless-stopped
+
+networks:
+  hackathon_network:
+    name: hackathon_network
+    driver: bridge
