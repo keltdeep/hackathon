@@ -4,7 +4,12 @@ import { AppDataSource } from './data-source';
 import {APP_PORT} from "@/configs/env";
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+        cors: {
+            origin: '*',
+            credentials: true,
+        },
+    });
 
     AppDataSource.initialize()
       .then(async() => {
