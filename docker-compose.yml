@@ -11,17 +11,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: sh -c "npm run start:dev"
+    command: sh -c "npm i && npm run start:dev"
     ports:
       - 6005:6005
     networks:
-      - hackathon_network
+      - microservices_network
     volumes:
       - .:/usr/app
       - /usr/app/node_modules
     restart: unless-stopped
 
 networks:
-  hackathon_network:
-    name: hackathon_network
-    driver: bridge
+  microservices_network:
+    name: microservices_network
+    external: true

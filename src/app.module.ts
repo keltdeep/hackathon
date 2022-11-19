@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
-import {AnaliticModule} from "@services/analitic/analitic.module";
+import {AuthModule} from "@services/auth/auth.module";
+import {UsersModule} from "@services/users/users.module";
+import {ScoreModule} from "@services/score/score.module";
 
 @Module({
   imports: [
-    AnaliticModule
+    AuthModule,
+    UsersModule,
+    ScoreModule,
   ],
   controllers: [],
   providers: [],

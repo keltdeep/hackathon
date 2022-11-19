@@ -11,7 +11,7 @@ const databaseEnvVariables = {
 };
 
 const NODE_ENV = process.env.NODE_ENV;
-const APP_PORT = process.env.APP_PORT
+const APP_PORT = process.env.APP_PORT;
 
 export {
   databaseEnvVariables,
