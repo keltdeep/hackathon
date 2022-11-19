@@ -4,7 +4,6 @@ import {AppDataSource} from "@/data-source";
 import {ScoreEntity} from "@services/score/entity/score.entity";
 import {logger} from "@/configs/logger";
 import {
-  CreateScoreByUser,
   CreateScoreDto,
   UpdateScore
 } from "@services/score/dto/create-score.dto";
@@ -28,6 +27,21 @@ export class ScoreService {
     } catch (err) {
       logger.error(`Счет не создан: ${JSON.stringify(err)}`);
     }
+  }
+
+  async deleteScore(vars: {scoreUuid: string, userId: number}): Promise<unknown> {
+    const foundScore =
+        await this.scoreRep.findOneOrFail({
+          where: {
+            uuid: vars.scoreUuid
+          }
+        })
+
+    if (foundScore.userId !== vars.userId || foundScore.value) {
+      throw new HttpException('Нельзя удалить счет', 400)
+    }
+
+    return this.scoreRep.softDelete(vars.scoreUuid)
   }
 
   async createScoreByUser(

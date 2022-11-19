@@ -1,6 +1,6 @@
 import {
   Body,
-  Controller,
+  Controller, Delete,
   Post, Req, UseGuards
 } from "@nestjs/common";
 import {ScoreService} from "@services/score/score.service";
@@ -13,6 +13,7 @@ import {
 import {JwtAuthGuard} from "@services/auth/guards/jwt-auth.guard";
 import {CurrencyOperationDto} from "@services/score/dto/currency-operation.dto";
 import {CustomRequest} from "@/models/custom-request";
+import {DeleteScoreDto} from "@services/score/dto/delete-score.dto";
 
 @Controller()
 export class ScoreController {
@@ -45,6 +46,17 @@ export class ScoreController {
     body.userId = req.user?.userId
 
     return this.scoreService.updateScore(body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('deleteScore')
+  deleteScore(
+      @Body() body: DeleteScoreDto,
+      @Req() req: CustomRequest
+  ): Promise<unknown> {
+    body.userId = req.user?.userId
+
+    return this.scoreService.deleteScore(body);
   }
 
   @UseGuards(JwtAuthGuard)
