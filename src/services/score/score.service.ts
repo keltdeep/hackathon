@@ -3,21 +3,27 @@ import {In, Repository} from "typeorm";
 import {AppDataSource} from "@/data-source";
 import {ScoreEntity} from "@services/score/entity/score.entity";
 import {logger} from "@/configs/logger";
-import {
-  CreateScoreDto,
-  UpdateScore
-} from "@services/score/dto/create-score.dto";
+import {CreateScoreDto, UpdateScore} from "@services/score/dto/create-score.dto";
 import {CurrencyOperationDto} from "@services/score/dto/currency-operation.dto";
 import {allCurrency} from "@services/score/consts";
 import {User} from "@services/users/entity/user.entity";
+import {CurrencyService} from "@services/api/currency/currency.service";
+import {TransactionHistoryEntity} from "@services/score/entity/transaction-history.entity";
+import {TransactionType} from "@/configs/enums/transaction-type";
 
 @Injectable()
 export class ScoreService {
+  constructor(private currencyService: CurrencyService) {
+  }
+
   private readonly scoreRep: Repository<ScoreEntity> =
     AppDataSource.getRepository(ScoreEntity);
 
   private readonly userRepository: Repository<User> =
       AppDataSource.getRepository(User);
+
+  private readonly transactionHistoryRep: Repository<TransactionHistoryEntity> =
+      AppDataSource.getRepository(TransactionHistoryEntity);
 
   createScore(score: CreateScoreDto): Promise<ScoreEntity> {
     const newScore = this.scoreRep.create(score);
@@ -26,6 +32,22 @@ export class ScoreService {
       return this.scoreRep.save(newScore);
     } catch (err) {
       logger.error(`Счет не создан: ${JSON.stringify(err)}`);
+    }
+  }
+
+  banCurrency(vars: {currency: string, banned: boolean}) {
+    try {
+      return this.currencyService.banCurrency(vars.currency, vars.banned)
+    } catch (err) {
+      logger.error(JSON.stringify(err))
+    }
+  }
+
+  getHistoryByScoreUuid(vars) {
+    try {
+      return this.transactionHistoryRep.find({where: {scoreUuid: vars.uuid}})
+    } catch (err) {
+      logger.error(JSON.stringify(err))
     }
   }
 
@@ -97,9 +119,14 @@ export class ScoreService {
   }
 
   async currencyOperation(vars: CurrencyOperationDto) {
+    const {
+      toCurrency,
+      fromCurrency,
+      value
+    } = vars
     if (
-        !allCurrency.includes(vars.toCurrency) ||
-        !allCurrency.includes(vars.fromCurrency)
+        !allCurrency.includes(toCurrency) ||
+        !allCurrency.includes(fromCurrency)
     ) {
       throw new HttpException('Такой валюты нет', 400)
     }
@@ -111,22 +138,93 @@ export class ScoreService {
             userId: vars.userId
           }
         })
+    console.log(foundScore)
 
-    const checkScores = foundScore.map((el) => {
+    const foundedScores = foundScore.map((el) => {
         if ([vars.toCurrency, vars.fromCurrency].includes(el.currency)) {
           return el
         }
     }).filter(Boolean)
 
-    if (foundScore.length <= 1 && checkScores.length === 2) {
-      throw new HttpException('Нет счета для покупки', 400)
+    const fromCurrencyScore = foundedScores.find((el) =>
+        el.currency === fromCurrency
+    )
+
+    const toCurrencyScore = foundedScores.find((el) =>
+        el.currency === toCurrency
+    )
+
+    if (fromCurrencyScore && fromCurrencyScore.value < value) {
+      throw new HttpException('Недостаточно денег', 400)
     }
 
-    /**
-     * TODO
-     */
 
-    console.log(foundScore, 'foundScore')
+    if (foundedScores.length <= 1) {
+      throw new HttpException('Нет счета для покупки', 400)
+    }
+    const allAvailableCurrency = await this.currencyService.getAvailable()
+
+    let operationAvailable = true
+    const allUserCurrency = [toCurrency, fromCurrency]
+
+    allUserCurrency.forEach((cur) => {
+      const foundCur = allAvailableCurrency.find((el) => el.currency === cur)
+
+      if (foundCur?.banned) {
+        operationAvailable = false
+      }
+    })
+
+    if (!operationAvailable) {
+      throw new HttpException('Операция с данными валютами не возможна', 400)
+    }
+
+
+    const rateInfo = await this.currencyService.getCurrencyRate(fromCurrency, toCurrency)
+
+    if (rateInfo) {
+      const resultToScoreForAdd = Number((rateInfo.rate * value).toFixed(4))
+
+      fromCurrencyScore.value = Number((fromCurrencyScore.value - value).toFixed(4))
+      toCurrencyScore.value = toCurrencyScore.value + resultToScoreForAdd
+
+      try {
+        return AppDataSource.manager.transaction(async (transactionalEntityManager) => {
+          const fromHistory = this.transactionHistoryRep.create({
+            fromCurrency,
+            toCurrency,
+            type: TransactionType.buy,
+            value: value,
+            scoreUuid: fromCurrencyScore.uuid
+          })
+
+          const toHistory = this.transactionHistoryRep.create({
+            fromCurrency,
+            toCurrency,
+            type: TransactionType.replenishment,
+            value: resultToScoreForAdd,
+            scoreUuid: toCurrencyScore.uuid
+          })
+
+          const scoreRes = await transactionalEntityManager.save(
+              await this.scoreRep.save([toCurrencyScore, fromCurrencyScore]),
+          );
+
+          const historyRes = await transactionalEntityManager.save(
+              await this.transactionHistoryRep.save([fromHistory, toHistory])
+          );
+
+          return {
+            scoreRes,
+            historyRes
+          }
+        });
+      } catch (err) {
+        logger.error(`Не пройдена транзакция по покупке: ${JSON.stringify(err)}`);
+      }
+    }
+
+
   }
 
   async updateScore(score: UpdateScore): Promise<ScoreEntity> {

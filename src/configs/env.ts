@@ -13,10 +13,12 @@ const databaseEnvVariables = {
 const NODE_ENV = process.env.NODE_ENV;
 const APP_PORT = process.env.APP_PORT;
 const SPACE_ROUTE = process.env.SPACE_ROUTE
+const CURRENCY_BASE_URL = "https://stbuddy.xyz/currency/"
 
 export {
   databaseEnvVariables,
   NODE_ENV,
   APP_PORT,
-  SPACE_ROUTE
+  SPACE_ROUTE,
+  CURRENCY_BASE_URL
 };

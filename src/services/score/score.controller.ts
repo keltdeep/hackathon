@@ -1,7 +1,7 @@
 import {
   Body,
-  Controller, Delete,
-  Post, Req, UseGuards
+  Controller, Delete, Get,
+  Post, Query, Req, UseGuards
 } from "@nestjs/common";
 import {ScoreService} from "@services/score/score.service";
 import {ScoreEntity} from "@services/score/entity/score.entity";
@@ -62,7 +62,19 @@ export class ScoreController {
 
   @UseGuards(JwtAuthGuard)
   @Post("currencyOperation")
-  currencyOperation(@Body() body: CurrencyOperationDto): Promise<ScoreEntity | void> {
+  currencyOperation(@Body() body: CurrencyOperationDto): Promise<any | void> {
     return this.scoreService.currencyOperation(body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("banCurrency")
+  banCurrency(@Body() body: {currency: string, banned: boolean}): Promise<any | void> {
+    return this.scoreService.banCurrency(body);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get("getHistoryByScoreUuid")
+  getHistoryByScoreUuid(@Query() query: { uuid: string }): Promise<any | void> {
+    return this.scoreService.getHistoryByScoreUuid(query);
   }
 }

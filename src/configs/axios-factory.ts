@@ -15,7 +15,7 @@ export const defaultAxios = (apiBaseUrl: string, options?: RequestConfig): Axios
 
       return data;
     },
-    transformResponse: (data: string) => JSON.parse(data),
+    transformResponse: (data: string) => data ? JSON.parse(data) : '',
     ...options,
     baseURL: apiBaseUrl,
   });
