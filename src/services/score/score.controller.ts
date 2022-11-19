@@ -14,8 +14,9 @@ import {JwtAuthGuard} from "@services/auth/guards/jwt-auth.guard";
 import {CurrencyOperationDto} from "@services/score/dto/currency-operation.dto";
 import {CustomRequest} from "@/models/custom-request";
 import {DeleteScoreDto} from "@services/score/dto/delete-score.dto";
+import {SPACE_ROUTE} from "@/configs/env";
 
-@Controller()
+@Controller(SPACE_ROUTE)
 export class ScoreController {
   constructor(private readonly scoreService: ScoreService) {
   }

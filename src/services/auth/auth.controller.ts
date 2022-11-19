@@ -3,9 +3,9 @@ import {AuthService} from "./auth.service";
 import {SignInDto} from "./dto/sign-in.dto";
 import {ShortUserDto} from "@services/users/dto/short-user.dto";
 import {plainToInstance} from "class-transformer";
-import {UserAdditionalFieldDto} from "@services/users/dto/user-additional-field.dto";
+import {SPACE_ROUTE} from "@/configs/env";
 
-@Controller()
+@Controller(SPACE_ROUTE)
 export class AuthController {
   constructor(private readonly authService: AuthService) {
   }

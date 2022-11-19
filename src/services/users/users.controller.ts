@@ -22,9 +22,9 @@ import {GetLoginDto} from "./dto/get-login.dto";
 import {userRoles} from "@/configs/enums/user-roles";
 import {CustomRequest} from "@/models/custom-request";
 import {UpdateUserDto} from "@services/users/dto/update-user.dto";
-import {format} from 'date-fns';
+import {SPACE_ROUTE} from "@/configs/env";
 
-@Controller()
+@Controller(SPACE_ROUTE)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {
   }

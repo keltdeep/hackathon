@@ -12,9 +12,11 @@ const databaseEnvVariables = {
 
 const NODE_ENV = process.env.NODE_ENV;
 const APP_PORT = process.env.APP_PORT;
+const SPACE_ROUTE = process.env.SPACE_ROUTE
 
 export {
   databaseEnvVariables,
   NODE_ENV,
-  APP_PORT
+  APP_PORT,
+  SPACE_ROUTE
 };
