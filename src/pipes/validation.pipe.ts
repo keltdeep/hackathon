@@ -26,7 +26,7 @@ export const validationPipe = new ValidationPipe({
   dismissDefaultMessages: true,
   exceptionFactory: (errors: ValidationError[]): void => {
     const firstErrorMessage = getFirstErrorWithMessage(errors);
-    console.log(errors)
+
     for (const key in firstErrorMessage) {
       if (firstErrorMessage[key]) {
         throw new HttpException(firstErrorMessage[key], 400);

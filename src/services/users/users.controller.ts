@@ -72,8 +72,6 @@ export class UsersController {
       body.deletedAt = new Date();
     }
 
-    body.id = req.user?.userId;
-
     const users: User = await this.usersService.updateUser(
       plainToInstance(User, body)
     );

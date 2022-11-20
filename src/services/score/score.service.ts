@@ -9,7 +9,7 @@ import {allCurrency} from "@services/score/consts";
 import {User} from "@services/users/entity/user.entity";
 import {CurrencyService} from "@services/api/currency/currency.service";
 import {TransactionHistoryEntity} from "@services/score/entity/transaction-history.entity";
-import {TransactionType} from "@/configs/enums/transaction-type";
+import {operationType, TransactionType} from "@/configs/enums/transaction-type";
 
 @Injectable()
 export class ScoreService {
@@ -45,7 +45,14 @@ export class ScoreService {
 
   getHistoryByScoreUuid(vars) {
     try {
-      return this.transactionHistoryRep.find({where: {scoreUuid: vars.uuid}})
+      return this.transactionHistoryRep.find({
+        where: {
+          scoreUuid: vars.uuid
+        },
+        order: {
+          createdAt: 'DESC'
+        }
+      })
     } catch (err) {
       logger.error(JSON.stringify(err))
     }
@@ -138,7 +145,6 @@ export class ScoreService {
             userId: vars.userId
           }
         })
-    console.log(foundScore)
 
     const foundedScores = foundScore.map((el) => {
         if ([vars.toCurrency, vars.fromCurrency].includes(el.currency)) {
@@ -195,7 +201,8 @@ export class ScoreService {
             toCurrency,
             type: TransactionType.buy,
             value: value,
-            scoreUuid: fromCurrencyScore.uuid
+            scoreUuid: fromCurrencyScore.uuid,
+            additionalScoreUuid: toCurrencyScore.uuid
           })
 
           const toHistory = this.transactionHistoryRep.create({
@@ -203,7 +210,8 @@ export class ScoreService {
             toCurrency,
             type: TransactionType.replenishment,
             value: resultToScoreForAdd,
-            scoreUuid: toCurrencyScore.uuid
+            scoreUuid: toCurrencyScore.uuid,
+            additionalScoreUuid: fromCurrencyScore.uuid
           })
 
           const scoreRes = await transactionalEntityManager.save(
@@ -236,10 +244,20 @@ export class ScoreService {
 
     let foundScore = allScores.find(({currency}) => currency === score.currency)
 
+    const newHistory = this.transactionHistoryRep.create({
+      fromCurrency: score.type === operationType.up ? null : foundScore.currency,
+      toCurrency: score.type === operationType.down ? null : foundScore.currency,
+      type: score.type === operationType.up ? TransactionType.replenishment : TransactionType.buy,
+      value: score.type === operationType.up ? (score.value - foundScore.value) : (foundScore.value - score.value),
+      scoreUuid: foundScore.uuid,
+      additionalScoreUuid: null
+    })
+
     foundScore.isActive = score.isActive
     foundScore.value = score.value
 
     try {
+      await this.transactionHistoryRep.save(newHistory)
       return this.scoreRep.save(foundScore);
     } catch (err) {
       logger.error(`Счет не создан: ${JSON.stringify(err)}`);

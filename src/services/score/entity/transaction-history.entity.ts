@@ -14,10 +14,10 @@ import {TransactionType} from "@/configs/enums/transaction-type";
 
 @Entity({name: "transaction_history"})
 export class TransactionHistoryEntity extends BaseEntityWithDates{
-    @Column()
+    @Column({nullable: true})
     fromCurrency: string;
 
-    @Column()
+    @Column({nullable: true})
     toCurrency: string;
 
     @Column({
@@ -31,4 +31,7 @@ export class TransactionHistoryEntity extends BaseEntityWithDates{
 
     @Column()
     scoreUuid: string;
+
+    @Column({nullable: true})
+    additionalScoreUuid: string
 }

@@ -1,4 +1,5 @@
-import {IsBoolean, IsNumber, IsOptional, IsString} from 'class-validator';
+import {IsBoolean, IsEnum, IsNumber, IsOptional, IsString} from 'class-validator';
+import {operationType} from "@/configs/enums/transaction-type";
 
 class CreateScoreDto {
     @IsNumber()
@@ -18,6 +19,9 @@ class CreateScoreDto {
 class UpdateScore extends CreateScoreDto {
     @IsNumber()
     userId: number;
+
+    @IsEnum(operationType)
+    type: string
 }
 
 class CreateScoreByUser {

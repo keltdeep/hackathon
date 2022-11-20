@@ -149,7 +149,10 @@ export class UsersService {
       additionalFields = await this.updateUserAdditionalFields(user.additionalFields);
     }
 
-    foundUser.verify = user.verify ? Number(user.verify) : foundUser.verify;
+    if ("verify" in user) {
+      foundUser.verify = Number(user.verify);
+    }
+
     foundUser.password = user.password ?? foundUser.password;
     foundUser.login = user.login ?? foundUser.login;
     foundUser.role = user.role ?? foundUser.role;
